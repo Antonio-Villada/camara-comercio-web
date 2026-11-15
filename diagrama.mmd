@@ -1,0 +1,13 @@
+graph LR
+A[Red Externa/Usuarios] --> B[Dokploy / Traefik]
+B --> C[Sitio Web Institucional]
+B --> D[Base de Datos PostgreSQL]
+B --> E[Panel Admin Dokploy]
+F[Servidor Linux Ubuntu] --> G[NTP - Servidor de Tiempo]
+F --> H[NFS - Archivos Linux]
+F --> I[NIS - Autenticación]
+F --> J[CUPS - Impresión]
+F --> K[Samba - Archivos Win/Mac]
+H --> L[Clientes NFS]
+K --> M[Personal Administrativo]
+I --> N[Control de Usuarios]
