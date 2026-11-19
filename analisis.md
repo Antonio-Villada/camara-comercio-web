@@ -1,21 +1,40 @@
 # 1. Análisis de Necesidades y Diseño de Infraestructura
 
 ## 1.1 Justificación de Servicios
-Para soportar la operación administrativa y los servicios al ciudadano de la Cámara de Comercio de Armenia y del Quindío, se requiere una infraestructura tecnológica robusta, segura y de alta disponibilidad. En primer lugar, se ha decidido implementar la plataforma PaaS Dokploy apoyada en el proxy inverso Traefik. Esta combinación permite el alojamiento eficiente del sitio web institucional bajo el protocolo seguro HTTPS, garantizando que el portal de trámites y la consulta de requisitos operen con confidencialidad. Como motor de base de datos se utilizará PostgreSQL, un sistema relacional de código abierto reconocido por su integridad transaccional, el cual es ideal para almacenar el registro mercantil y los datos sensibles de los afiliados sin comprometer el rendimiento.
+Para soportar la operación administrativa y los servicios al ciudadano de la **Cámara de Comercio de Armenia y del Quindío**, se requiere una infraestructura tecnológica robusta, segura y centralizada. En primer lugar, se implementó la plataforma PaaS **Dokploy** apoyada en el proxy inverso **Traefik**. Esta arquitectura permite el despliegue ágil del sitio web institucional (Nginx) bajo el protocolo seguro HTTPS, garantizando que el portal de trámites y la consulta de requisitos operen con confidencialidad e integridad. Como motor de base de datos se seleccionó **PostgreSQL**, un sistema relacional de código abierto reconocido por su integridad transaccional, ideal para respaldar el registro mercantil y los datos de los afiliados dentro de una red privada aislada de Internet.
 
-Por otro lado, la legalidad y la auditoría son pilares en una Cámara de Comercio. Por ello, se implementará un servidor de tiempo (NTP) nativo en Linux, asegurando una sincronización horaria exacta en toda la red. Esto es vital para que las marcas de tiempo en las transacciones web, la emisión de certificados y los registros en la base de datos tengan validez legal y trazabilidad. En cuanto al manejo de la información interna, se configurará NFS como un repositorio centralizado de documentos legales, cuyo acceso será exclusivo y optimizado para los servidores Linux de la entidad.
+Por otro lado, la trazabilidad y la auditoría son pilares legales en una Cámara de Comercio. Por ello, se implementó un servidor de tiempo (**NTP / NTPsec**) nativo en Linux para garantizar una sincronización horaria precisa en toda la red, asegurando que las marcas de tiempo en transacciones web, certificados y registros de base de datos sean consistentes. Para el manejo de archivos internos, se configuró **NFS** como repositorio centralizado de documentos legales y administrativos optimizado para servidores y estaciones Linux de la entidad.
 
-Finalmente, para el entorno de trabajo diario de los funcionarios, se desplegará un servidor Samba que permitirá al personal administrativo colaborar y compartir documentos ofimáticos desde estaciones de trabajo Windows y macOS. La seguridad de acceso a todos estos recursos internos estará centralizada mediante NIS (Network Information Service), evitando la administración descentralizada de credenciales. El ecosistema se completa con la implementación de CUPS, un servidor de impresión que centralizará y gestionará las colas de impresión para la emisión física de certificados mercantiles en las oficinas de atención presencial.
+Finalmente, para el trabajo colaborativo diario de los funcionarios que utilizan estaciones Windows y macOS, se desplegó un servidor **Samba** protegido por grupos de acceso. La gestión de credenciales en los servicios internos se centralizó mediante **NIS** (*Network Information Service*), evitando la administración descentralizada de usuarios. El ecosistema se completa con **CUPS**, encargado de centralizar las colas de impresión para la emisión física de certificados mercantiles, reforzado con medidas adicionales de seguridad perimetral (**UFW**), respaldos automáticos locales y monitoreo con alertas.
 
 ## 1.2 Requisitos Técnicos
 
 | Servicio | Dominio / IP | Puerto | Protocolo | Tipo de Servicio |
 | :--- | :--- | :--- | :--- | :--- |
-| **Web Server** | `camara.villadastudios.com` | 80/443 | HTTP/HTTPS | Dokploy (Contenedor) |
-| **PostgreSQL** | Interna (Dokploy) | 5432 | TCP | Dokploy (Contenedor) |
+| **Web Server (Nginx)** | `camara.villadastudios.com` | 80 / 443 | HTTP / HTTPS | Dokploy (Contenedor) |
+| **PostgreSQL** | Red Interna (Docker) | 5432 | TCP | Dokploy (Contenedor) |
 | **Panel Admin** | `35.225.203.150` | 3000 | TCP | Dokploy UI |
-| **NTP** | Red Local / IP Servidor | 123 | UDP | Linux Nativo |
-| **NFS** | Red Local / IP Servidor | 2049 | TCP/UDP | Linux Nativo |
-| **NIS** | Red Local / IP Servidor | 111 / YPSERV | TCP/UDP | Linux Nativo |
+| **SSH (Administración)** | `35.225.203.150` | 22 | TCP | Linux Nativo |
+| **NTP (NTPsec)** | Red Local / IP Servidor | 123 | UDP | Linux Nativo |
+| **NFS** | Red Local / IP Servidor | 2049 | TCP / UDP | Linux Nativo |
+| **NIS** | Red Local / IP Servidor | 111 / YPSERV | TCP / UDP | Linux Nativo |
 | **CUPS** | Red Local / IP Servidor | 631 | TCP | Linux Nativo |
-| **Samba** | Red Local / IP Servidor | 139/445 | TCP | Linux Nativo |
+| **Samba** | Red Local / IP Servidor | 139 / 445 | TCP | Linux Nativo |
+
+## 1.3 Diagrama de Arquitectura
+
+```mermaid
+graph LR
+    A[Red Externa / Usuarios] --> B[Dokploy / Traefik]
+    B --> C[Sitio Web Institucional]
+    B --> D[Base de Datos PostgreSQL]
+    B --> E[Panel Admin Dokploy]
+    F[Servidor Linux Ubuntu 24.04] --> G[NTP - Servidor de Tiempo]
+    F --> H[NFS - Archivos Linux]
+    F --> I[NIS - Autenticación]
+    F --> J[CUPS - Impresión]
+    F --> K[Samba - Archivos Win/Mac]
+    H --> L[Clientes NFS]
+    K --> M[Personal Administrativo]
+    I --> N[Control de Usuarios]
+```
